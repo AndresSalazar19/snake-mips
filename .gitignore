@@ -1,0 +1,27 @@
+#JAR de MARS (normalmente descargado)
+Mars*.jar
+
+# Archivos temporales de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos temporales comunes
+*.class
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Archivos generados por editores
+*.sublime-workspace
+*.sublime-project
+*.vscode/
+.idea/
+*.iml
+
+# Archivos ocultos de configuración
+*.~*
+*#
+
+# Carpetas ocultas de backup (a veces generadas por editores)
+*/__MACOSX/
