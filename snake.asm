@@ -23,11 +23,12 @@ snakeRight:      .word    0x00288a3f      # Color para cuando la serpiente va a 
 xConversion:     .word    4               # Conversión de coordenadas X a dirección de memoria
 yConversion:     .word    128             # Conversión de coordenadas Y a dirección de memoria
 score:      .word   0      # Puntos acumulados por comer manzanas
+msgScore:   .asciiz "SCORE: "
 
 .text
 main:
 
-### Dibujo del fondo del juego
+# Dibujo del fondo del juego
 
     la     $t0, frameBuffer        # Cargar la dirección del buffer de pantalla
     li     $t1, 262144             # Cantidad de pixeles: 512 * 512
@@ -38,7 +39,7 @@ l1:
     addi   $t1, $t1, -1            # Decrementar contador
     bne    $t1, $zero, l1          # Repetir hasta pintar todo
 
-### Dibujo de los bordes del juego
+# Dibujo de los bordes del juego
 
     # Bordes superior e inferior
     la     $t0, frameBuffer
@@ -79,6 +80,20 @@ drawBorderColumn:
     sw     $t2, 0($t3)             # Pintar cabeza
     addi   $t1, $t3, -128          # Pintar pixel encima
     sw     $t2, 0($t1)
+
+# Mostrar el texto inicial "SCORE: 0"
+    li   $v0, 4          # syscall para imprimir string
+    la   $a0, msgScore
+    syscall
+
+    lw   $a0, score      # score está en 0 al inicio
+    li   $v0, 1          # syscall para imprimir entero
+    syscall
+
+    # Salto de línea opcional
+    li   $v0, 11
+    li   $a0, 10         # ASCII de '\n'
+    syscall
 
     # Dibujo inicial de la manzana
     jal    drawApple
@@ -199,9 +214,21 @@ updateSnake:
     lw   $t7, score       # Cargar el score actual
     addi $t7, $t7, 1      # Incrementar en 1
     sw   $t7, score       # Guardar de nuevo
-    li   $v0, 1      # syscall para imprimir entero
-    lw   $a0, score
+    # Mostrar "SCORE: "
+    li   $v0, 4          # syscall para imprimir string
+    la   $a0, msgScore   # dirección del mensaje
     syscall
+
+    # Mostrar el número del score
+    lw   $a0, score      # cargar el valor actual
+    li   $v0, 1          # syscall para imprimir entero
+    syscall
+
+    # Salto de línea
+    li   $v0, 11         # syscall para imprimir carácter
+    li   $a0, 10         # código ASCII para newline '\n'
+    syscall
+
 
 	j exitUpdateSnake
 
