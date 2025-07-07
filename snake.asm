@@ -22,6 +22,7 @@ snakeLeft:       .word    0x00288a3d      # Color para cuando la serpiente va a 
 snakeRight:      .word    0x00288a3f      # Color para cuando la serpiente va a la derecha
 xConversion:     .word    4               # Conversión de coordenadas X a dirección de memoria
 yConversion:     .word    128             # Conversión de coordenadas Y a dirección de memoria
+score:      .word   0      # Puntos acumulados por comer manzanas
 
 .text
 main:
@@ -194,6 +195,14 @@ updateSnake:
 	
 	jal 	newAppleLocation
 	jal	drawApple
+	# Incrementar el score
+    lw   $t7, score       # Cargar el score actual
+    addi $t7, $t7, 1      # Incrementar en 1
+    sw   $t7, score       # Guardar de nuevo
+    li   $v0, 1      # syscall para imprimir entero
+    lw   $a0, score
+    syscall
+
 	j exitUpdateSnake
 
 	
