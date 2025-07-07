@@ -14,8 +14,8 @@ yVel:            .word    0               # Velocidad en Y
 xPos:            .word    20              # Posición X de la cabeza de la serpiente
 yPos:            .word    13              # Posición Y de la cabeza de la serpiente
 tail:            .word    2000            # Posición de la cola en el bitmap
-plasticX:        .word    4               # Posición X de la manzana
-plasticY:        .word    10              # Posición Y de la manzana
+plasticX:        .word    4               # Posición X del plastico
+plasticY:        .word    10              # Posición Y del plastico
 sharkUp:     	 .word 0xFFAAAAAA   	# Gris claro, dirección 00
 sharkDown:       .word 0xFFAAAAAB   	# Gris claro, dirección 01
 sharkLeft:       .word 0xFFAAAAAC   	# Gris claro, dirección 10
@@ -23,7 +23,7 @@ sharkRight:      .word 0xFFAAAAAD   	# Gris claro, dirección 11
 
 xConversion:     .word    4               # Conversión de coordenadas X a dirección de memoria
 yConversion:     .word    128             # Conversión de coordenadas Y a dirección de memoria
-score:           .word   0      # Puntos acumulados por comer manzanas
+score:           .word   0      # Puntos acumulados por comer plasticos
 msgScore:        .asciiz "SCORE: "
 
 .text
@@ -96,7 +96,7 @@ drawBorderColumn:
     li   $a0, 10         # ASCII de '\n'
     syscall
 
-    # Dibujo inicial de la manzana
+    # Dibujo inicial del plastico
     jal    drawPlastic
 
 # Bucle de actualización del juego
