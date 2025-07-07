@@ -1,124 +1,105 @@
 # Author: Andrés Salazar y Yadira Suarez
 
-###############################################################
-### 		Configuración del juego		    	    ###	
-###							    ###
-###	Ancho del pixel: 16 			    	    ###
-###	Alto del pixel: 16				    ###
-###	Ancho total del juego: 512			    ###
-###	Alto total del juego: 512 			    ###
-###	base de posicion del juego 0x10010000 (static data) ###
-###							    ###	
-###############################################################
+# === Configuración del Juego ===
+# Resolución de pantalla:      512 x 512 píxeles
+# Tamaño de cada píxel:        16 x 16
+# Dirección base de memoria:   0x10010000 (área de datos estática)
+# Cada píxel usa 4 bytes (ARGB)
 
 .data
 
-frameBuffer: 	.space 	0x00100000		#512 de ancho y 512 de alto y 4 bytes por pixel (512x512x4)/16 
-xVel:		.word	0		
-yVel:		.word	0		
-xPos:		.word	20		
-yPos:		.word	13		
-tail:		.word	2000		# location of rail on bit map display
-appleX:		.word	4		# posicion x de la comida 
-appleY:		.word	10	
-snakeUp:	.word	0x00288a3a	# green pixel for when snaking moving up	
-snakeDown:	.word	0x00288a3b	
-snakeLeft:	.word	0x00288a3d	
-snakeRight:	.word	0x00288a3f	
-xConversion:	.word	4		
-yConversion:	.word	128		
+frameBuffer:     .space     0x00100000    # Espacio para la pantalla (512x512x4 bytes)
+xVel:            .word    0               # Velocidad en X
+yVel:            .word    0               # Velocidad en Y
+xPos:            .word    20              # Posición X de la cabeza de la serpiente
+yPos:            .word    13              # Posición Y de la cabeza de la serpiente
+tail:            .word    2000            # Posición de la cola en el bitmap
+appleX:          .word    4               # Posición X de la manzana
+appleY:          .word    10              # Posición Y de la manzana
+snakeUp:         .word    0x00288a3a      # Color para cuando la serpiente va hacia arriba
+snakeDown:       .word    0x00288a3b      # Color para cuando la serpiente va hacia abajo
+snakeLeft:       .word    0x00288a3d      # Color para cuando la serpiente va a la izquierda
+snakeRight:      .word    0x00288a3f      # Color para cuando la serpiente va a la derecha
+xConversion:     .word    4               # Conversión de coordenadas X a dirección de memoria
+yConversion:     .word    128             # Conversión de coordenadas Y a dirección de memoria
 
-     
 .text
 main:
 
-### Sección del fondo del juego
+### Dibujo del fondo del juego
 
-	la 	$t0, frameBuffer	# cargar la dirección frameBuffer
-	li 	$t1, 262144		# guarda 512*512 pixels, el número de cuadrados que se pintará
-	li 	$t2, 0xcc9b9b		# color de la pantalla
+    la     $t0, frameBuffer        # Cargar la dirección del buffer de pantalla
+    li     $t1, 262144             # Cantidad de pixeles: 512 * 512
+    li     $t2, 0xcc9b9b           # Color de fondo gris claro
 l1:
-	sw   	$t2, 0($t0)
-	addi 	$t0, $t0, 4 		# avanza al siguiente pixel a pintar
-	addi 	$t1, $t1, -1		# decrementa el número de pixeles
-	bne 	$t1, $zero, l1		# se repite mientras el número de pixeles faltantes sea diferente de 0
-			
-### Borde
-	
-	# Borde Top y bottom
-	la	$t0, frameBuffer
-	addi	$t1, $zero, 32		# 512/16 32 columnas a pintar
-	li 	$t2, 0x00000000		# borde color negro
+    sw     $t2, 0($t0)             # Pintar pixel actual
+    addi   $t0, $t0, 4             # Avanzar al siguiente pixel
+    addi   $t1, $t1, -1            # Decrementar contador
+    bne    $t1, $zero, l1          # Repetir hasta pintar todo
+
+### Dibujo de los bordes del juego
+
+    # Bordes superior e inferior
+    la     $t0, frameBuffer
+    li     $t1, 32                 # 512/16 = 32 columnas
+    li     $t2, 0x00000000         # Color negro para el borde
+
 drawBorderTop:
-	sh	$t2, 0($t0)		# pinta 
-	addi	$t0, $t0, 4		# avanza al siguiente pixel a pintar
-	addi	$t1, $t1, -1		# resta 1 a las columnas por pintar
-	bne 	$t1, $zero, drawBorderTop	# repite hast haya completado todas las columnas
-	
-	addi	$t0, $t0, 3840		# manda a la última fila 31x32x4
-	addi	$t1, $zero, 32		# pintará 32 filas (512/16)
+    sh     $t2, 0($t0)             # Pintar borde superior
+    addi   $t0, $t0, 4             # Siguiente pixel
+    addi   $t1, $t1, -1
+    bne    $t1, $zero, drawBorderTop
+
+    addi   $t0, $t0, 3840          # Ir al inicio de la última fila
+    li     $t1, 32                 # Pintar 32 columnas
 
 drawBorderBot:
-	sh	$t2, 0($t0)		
-	addi	$t0, $t0, 4		
-	addi	$t1, $t1, -1		
-	bne 	$t1, $zero, drawBorderBot	
-	
-	# Borde left y right
-	la	$t0, frameBuffer	
-	addi	$t1, $zero, 32		# 32 filas a pintar (512/16)
+    sh     $t2, 0($t0)             # Pintar borde inferior
+    addi   $t0, $t0, 4
+    addi   $t1, $t1, -1
+    bne    $t1, $zero, drawBorderBot
+
+    # Bordes izquierdo y derecho
+    la     $t0, frameBuffer
+    li     $t1, 32                 # 32 filas
 
 drawBorderColumn:
-	sh	$t2, 0($t0)		# pinta el borde left
-	sh 	$t2, 124($t0)		# pinta el borde right
-	addi	$t0, $t0, 128		# va al siguiente fila 32x4
-	addi	$t1, $t1, -1		# festa 1 al numero de filas por pintar
-	bne	$t1, $zero, drawBorderColumn	
-	
-	### dibujo de serpiente
-	la 	$t0, frameBuffer	
-	lw	$t1, tail		#tail
-	lw 	$t2, snakeUp	
+    sh     $t2, 0($t0)             # Pintar borde izquierdo
+    sh     $t2, 124($t0)           # Pintar borde derecho
+    addi   $t0, $t0, 128           # Avanzar a la siguiente fila
+    addi   $t1, $t1, -1
+    bne    $t1, $zero, drawBorderColumn
 
-	add 	$t3, $t1, $t0
-	sw	$t2, 0($t3)			
-	addi	$t1, $t3, -128		# pintar el pixel  encima
-	sw	$t2, 0($t1)		
-	
-	### draw initial apple
-	jal 	drawApple
+    # Dibujo inicial de la serpiente
+    la     $t0, frameBuffer
+    lw     $t1, tail
+    lw     $t2, snakeUp
+    add    $t3, $t1, $t0
+    sw     $t2, 0($t3)             # Pintar cabeza
+    addi   $t1, $t3, -128          # Pintar pixel encima
+    sw     $t2, 0($t1)
 
-# This is the update function for game
-# psudeocode
-# input = get user input
-# if input == w { moveUp();}
-# if input == s { moveDown();}	
-# if input == a { moveLeft();}	
-# if input == d { moveRigth();}	
-### each move method has similar code
-# moveDirection () {
-#	dir = direction of snake
-#	updateSnake(dir)
-#	updateSnakeHeadPosition()
-#	go back to beginning of update fucntion
-# } 	
-# Registers:
-# t3 = key press input
-# s3 = direction of the snake
+    # Dibujo inicial de la manzana
+    jal    drawApple
+
+# Bucle de actualización del juego
+
+# Lógica: espera entrada del teclado y llama a la función de movimiento
+# con base en la tecla presionada. Si no hay tecla, sigue moviendo hacia arriba
+
 gameUpdateLoop:
 
-	lw	$t3, 0xffff0004		# get keypress from keyboard input
-	
-	### Sleep for 66 ms so frame rate is about 15
-	addi	$v0, $zero, 32	# syscall sleep
-	addi	$a0, $zero, 100	# 100 ms	
-	
-	syscall
-	beq	$t3, 100, moveRight	# if key press = 'd' branch to moveright
-	beq	$t3, 97, moveLeft	# else if key press = 'a' branch to moveLeft
-	beq	$t3, 119, moveUp	# if key press = 'w' branch to moveUp
-	beq	$t3, 115, moveDown	# else if key press = 's' branch to moveDown
-	beq	$t3, 0, moveUp		# start game moving up
+    lw     $t3, 0xffff0004         # Leer entrada de teclado
+
+    addi   $v0, $zero, 32          # Pausa de 100 ms (para ~15 FPS)
+    addi   $a0, $zero, 100
+    syscall
+
+    beq    $t3, 100, moveRight     # 'd'
+    beq    $t3, 97, moveLeft       # 'a'
+    beq    $t3, 119, moveUp        # 'w'
+    beq    $t3, 115, moveDown      # 's'
+    beq    $t3, 0, moveUp          # Si no hay entrada, ir hacia arriba
 
 moveUp:
 	lw	$s3, snakeUp	# s3 = direction of snake
