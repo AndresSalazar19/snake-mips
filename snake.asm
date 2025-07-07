@@ -16,10 +16,11 @@ yPos:            .word    13              # Posición Y de la cabeza de la serpi
 tail:            .word    2000            # Posición de la cola en el bitmap
 appleX:          .word    4               # Posición X de la manzana
 appleY:          .word    10              # Posición Y de la manzana
-snakeUp:         .word    0x00288a3a      # Color para cuando la serpiente va hacia arriba
-snakeDown:       .word    0x00288a3b      # Color para cuando la serpiente va hacia abajo
-snakeLeft:       .word    0x00288a3d      # Color para cuando la serpiente va a la izquierda
-snakeRight:      .word    0x00288a3f      # Color para cuando la serpiente va a la derecha
+sharkUp:     .word 0xFFAAAAAA   # Gris claro, dirección 00
+sharkDown:   .word 0xFFAAAAAB   # Gris claro, dirección 01
+sharkLeft:   .word 0xFFAAAAAC   # Gris claro, dirección 10
+sharkRight:  .word 0xFFAAAAAD   # Gris claro, dirección 11
+
 xConversion:     .word    4               # Conversión de coordenadas X a dirección de memoria
 yConversion:     .word    128             # Conversión de coordenadas Y a dirección de memoria
 score:      .word   0      # Puntos acumulados por comer manzanas
@@ -32,7 +33,7 @@ main:
 
     la     $t0, frameBuffer        # Cargar la dirección del buffer de pantalla
     li     $t1, 262144             # Cantidad de pixeles: 512 * 512
-    li     $t2, 0xcc9b9b           # Color de fondo gris claro
+    li     $t2, 0xFF003366           # Color de fondo gris claro
 l1:
     sw     $t2, 0($t0)             # Pintar pixel actual
     addi   $t0, $t0, 4             # Avanzar al siguiente pixel
@@ -75,7 +76,7 @@ drawBorderColumn:
     # Dibujo inicial de la serpiente
     la     $t0, frameBuffer
     lw     $t1, tail
-    lw     $t2, snakeUp
+    lw     $t2, sharkUp
     add    $t3, $t1, $t0
     sw     $t2, 0($t3)             # Pintar cabeza
     addi   $t1, $t3, -128          # Pintar pixel encima
@@ -118,7 +119,7 @@ gameUpdateLoop:
     beq    $t3, 0, moveUp          # Si no hay entrada, ir hacia arriba
 
 moveUp:
-	lw	$s3, snakeUp	# s3 = direction of snake
+	lw	$s3, sharkUp	# s3 = direction of snake
 	add	$a0, $s3, $zero	# a0 = direction of snake
 	addi	$t5, $zero, 0		# set x velocity to zero
 	addi	$t6, $zero, -1	 	# set y velocity to -1
@@ -130,7 +131,7 @@ moveUp:
 	j	exitMoving 	
 
 moveDown:
-	lw	$s3, snakeDown	# s3 = direction of snake
+	lw	$s3, sharkDown	# s3 = direction of snake
 	add	$a0, $s3, $zero	# a0 = direction of snake
 	addi	$t5, $zero, 0		# set x velocity to zero
 	addi	$t6, $zero, 1 		# set y velocity to 1
@@ -142,7 +143,7 @@ moveDown:
 	j	exitMoving 
 	
 moveRight:
-	lw	$s3, snakeRight	# s3 = direction of snake
+	lw	$s3, sharkRight	# s3 = direction of snake
 	add	$a0, $s3, $zero	# a0 = direction of snake
 	addi	$t5, $zero, 1		# set x velocity to 1
 	addi	$t6, $zero, 0 		# set y velocity to zero
@@ -154,7 +155,7 @@ moveRight:
 	j	exitMoving 
 
 moveLeft:
-	lw	$s3, snakeLeft	# s3 = direction of snake
+	lw	$s3, sharkLeft	# s3 = direction of snake
 	add	$a0, $s3, $zero	# a0 = direction of snake
 	addi	$t5, $zero, -1		# set x velocity to -1
 	addi	$t6, $zero, 0 		# set y velocity to zero
@@ -235,7 +236,7 @@ updateSnake:
 	
 headNotApple:
 
-	li	$t2, 0xcc9b9b			# load light gray color
+	li	$t2, 0xFF003366			# load light gray color
 	beq	$t2, $t4, validHeadSquare	# if head location is background branch away
 	
 	addi 	$v0, $zero, 10	# exit the program
@@ -247,21 +248,21 @@ validHeadSquare:
 	lw	$t0, tail		# t0 = tail
 	la 	$t1, frameBuffer	# load frame buffer address
 	add	$t2, $t0, $t1		# t2 = tail location on the bitmap display
-	li 	$t3, 0xcc9b9b		# load light gray color
+	li 	$t3, 0xFF003366		# load light gray color
 	lw	$t4, 0($t2)		# t4 = tail direction and color
 	sw	$t3, 0($t2)		# replace tail with background color
 	
 	### update new Tail
-	lw	$t5, snakeUp			# load word snake up = 0x0000ff00
+	lw	$t5, sharkUp			# load word snake up = 0x0000ff00
 	beq	$t5, $t4, setNextTailUp		# if tail direction and color == snake up branch to setNextTailUp
 	
-	lw	$t5, snakeDown			# load word snake up = 0x0100ff00
+	lw	$t5, sharkDown			# load word snake up = 0x0100ff00
 	beq	$t5, $t4, setNextTailDown	# if tail direction and color == snake down branch to setNextTailDown
 	
-	lw	$t5, snakeLeft			# load word snake up = 0x0200ff00
+	lw	$t5, sharkLeft			# load word snake up = 0x0200ff00
 	beq	$t5, $t4, setNextTailLeft	# if tail direction and color == snake left branch to setNextTailLeft
 	
-	lw	$t5, snakeRight			# load word snake up = 0x0300ff00
+	lw	$t5, sharkRight			# load word snake up = 0x0300ff00
 	beq	$t5, $t4, setNextTailRight	# if tail direction and color == snake right branch to setNextTailRight
 	
 setNextTailUp:
@@ -390,7 +391,7 @@ redoRandom:
 	add	$t0, $t4, $t0		
 	lw	$t5, 0($t0)		# t5 = value of pixel at t0
 	
-	li	$t6, 0xcc9b9b		# load light gray color
+	li	$t6, 0xFF003366		# load light gray color
 	beq	$t5, $t6, goodApple	# if loction is a good sqaure branch to goodApple
 	j redoRandom
 
